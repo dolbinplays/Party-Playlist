@@ -4,7 +4,7 @@ A local Android party-room application with guest requests/voting and a host-con
 
 ## APK builds
 
-GitHub Actions builds a **debug APK** on pushes to `main` and from **Actions → Build Android APK → Run workflow**. After a successful run, open the run's **Artifacts** section and download `PartyQueue-debug-apk`. Unzip the downloaded artifact to get `app-debug.apk`; install it on your Android phone.
+GitHub Actions builds a **debug APK** on pushes to `main` and from **Actions → Build PartyQueue Android APK → Run workflow**. Successful builds publish a directly downloadable **APK under [GitHub Releases](https://github.com/dolbinplays/Party-Playlist/releases)**. On Android, open the release page, tap the `.apk` under **Assets**, and install. This avoids expiring chat sandbox links and does not require unzipping the older build artifact. GitHub Actions also retains a ZIP under each run's Artifacts section for 30 days.
 
 This APK is a **development/test build**, not a signed production release. Future source changes should trigger automated APK generation; no local Android Studio build required.
 
