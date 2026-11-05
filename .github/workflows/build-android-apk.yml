@@ -13,7 +13,7 @@ on:
       - 'gradle.properties'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -68,3 +68,28 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Prepare APK for direct download
+        shell: bash
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk PartyQueue-v0.26.11.03.1-debug.apk
+          test -s PartyQueue-v0.26.11.03.1-debug.apk
+
+      - name: Publish downloadable GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="v0.26.11.03.1-debug"
+          FILE="PartyQueue-v0.26.11.03.1-debug.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" \
+              --title "PartyQueue v0.26.11.03.1 (Android test APK)" \
+              --notes "Experimental Android local party host / YouTube Music overlay proof of concept. Debug-signed for testing. Includes host-controlled assisted Play next action; playback automation has not been validated on a device." \
+              --prerelease \
+              --target "$GITHUB_SHA"
+          fi
