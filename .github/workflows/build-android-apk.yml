@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           cat patches/auto-dj-v0.26.11.05.2.patch.xz.b64 | tr -d '\r\n' | base64 --decode > /tmp/partyqueue-autodj.patch.xz
-          echo "e35e7a9074425f216a0f4365cba5932cb33d2a9e9c49d5054dc292e74ad370f6  /tmp/partyqueue-autodj.patch.xz" | sha256sum --check
+          echo "b4c973067a86e7930a1b52ef6b94e268e4c13609dedcdd6dfe0b5164ce3a2ea2  /tmp/partyqueue-autodj.patch.xz" | sha256sum --check
           xz -dc /tmp/partyqueue-autodj.patch.xz | patch -p1 --batch --fuzz=0
           grep -q "versionName '0.26.11.05.2'" app/build.gradle
 
