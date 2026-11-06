@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/build-android-apk.yml'
       - 'source/**'
+      - 'patches/**'
       - 'app/**'
       - 'build.gradle'
       - 'settings.gradle'
@@ -33,6 +34,15 @@ jobs:
           test -f app/build.gradle
           test -f settings.gradle
 
+      - name: Apply verified Auto DJ patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat patches/auto-dj-v0.26.11.05.2.patch.xz.b64 | tr -d '\r\n' | base64 --decode > /tmp/partyqueue-autodj.patch.xz
+          echo "e35e7a9074425f216a0f4365cba5932cb33d2a9e9c49d5054dc292e74ad370f6  /tmp/partyqueue-autodj.patch.xz" | sha256sum --check
+          xz -dc /tmp/partyqueue-autodj.patch.xz | patch -p1 --batch --fuzz=0
+          grep -q "versionName '0.26.11.05.2'" app/build.gradle
+
       - name: Check code safeguards
         run: python3 tests/check_package.py
 
@@ -41,6 +51,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Test Auto DJ approval policy without Android
+        shell: bash
+        run: |
+          mkdir -p /tmp/partyqueue-rules
+          javac -d /tmp/partyqueue-rules app/src/main/java/com/partyqueue/local/AutoDjPolicy.java tests/AutoDjPolicyHarness.java
+          java -cp /tmp/partyqueue-rules AutoDjPolicyHarness
 
       - name: Set up Android SDK command-line tools
         uses: android-actions/setup-android@v4
@@ -64,7 +81,7 @@ jobs:
       - name: Upload installable debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: PartyQueue-v0.26.11.03.1-debug-apk
+          name: PartyQueue-v0.26.11.05.2-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
@@ -72,8 +89,8 @@ jobs:
       - name: Prepare APK for direct download
         shell: bash
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk PartyQueue-v0.26.11.03.1-debug.apk
-          test -s PartyQueue-v0.26.11.03.1-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk PartyQueue-v0.26.11.05.2-debug.apk
+          test -s PartyQueue-v0.26.11.05.2-debug.apk
 
       - name: Publish downloadable GitHub Release
         shell: bash
@@ -82,14 +99,14 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          TAG="v0.26.11.03.1-debug"
-          FILE="PartyQueue-v0.26.11.03.1-debug.apk"
+          TAG="v0.26.11.05.2-debug"
+          FILE="PartyQueue-v0.26.11.05.2-debug.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$FILE" --clobber
           else
             gh release create "$TAG" "$FILE" \
-              --title "PartyQueue v0.26.11.03.1 (Android test APK)" \
-              --notes "Experimental Android local party host / YouTube Music overlay proof of concept. Debug-signed for testing. Includes host-controlled assisted Play next action; playback automation has not been validated on a device." \
+              --title "PartyQueue v0.26.11.05.2 (Auto DJ experiment)" \
+              --notes "Auto DJ experimental patch: automatic guest-vote approval, serial unattended search and Play next attempts, collapsible overlay, and failure reporting. Queue insertion is unverified until tested on a phone. Developer debug build." \
               --prerelease \
               --target "$GITHUB_SHA"
           fi
